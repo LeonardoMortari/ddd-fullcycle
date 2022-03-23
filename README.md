@@ -1,4 +1,4 @@
 # DDD-Fullcycle
 
 
-# Curso DDD: Modelagem Tática e Patterns
+Curso DDD: Modelagem Tática e Patterns
