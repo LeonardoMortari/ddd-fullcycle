@@ -29,23 +29,81 @@ export default class OrderRepository implements OrderRepositoryInterface {
     }
 
     async update(entity: Order): Promise<void> {
-        await OrderModel.update(
-            {
-                total: entity.total(),
-                items: entity.items.map((item) => ({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    product_id: item.productId,
-                    quantity: item.quantity,
-                }))
-            }, 
-            {
-                where: {
-                    id: entity.id
-                }
-            },
-        );
+
+        const sequelize = OrderModel.sequelize;
+    
+        await sequelize.transaction(async (t) => {
+            try {
+                await OrderItemModel.destroy({
+                    where: { 
+                        order_id: entity.id 
+                    },
+                    transaction: t,
+                }).then((data) => {
+                    
+                    console.log("Itens destruídos");
+                });
+            } catch (error) {
+                console.log("Erro ao destruir items: " + error);
+            }
+        
+            const items = entity.items.map((item) => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                product_id: item.productId,
+                quantity: item.quantity,
+                order_id: entity.id
+                })
+            );
+
+            try {
+                await OrderItemModel.bulkCreate(
+                    items, 
+                    { 
+                        transaction: t 
+                    }
+                ).then((data) => {
+
+                    console.log("Itens criados!");
+                });
+            } catch (error) {
+                console.log("Erro ao criar os items: " + error);
+            }
+
+           try {
+                await OrderModel.update(
+                    { 
+                        total: entity.total()                    },
+                    { 
+                        where: { id: entity.id },
+                        transaction: t,
+                    }
+                );
+            } catch (error) {
+                console.log("Erro ao dar update: " + error);
+            }
+      
+            
+        });
+
+        // await OrderModel.update(
+        //     {
+        //         total: entity.total(),
+        //         items: entity.items.map((item) => ({
+        //             id: item.id,
+        //             name: item.name,
+        //             price: item.price,
+        //             product_id: item.productId,
+        //             quantity: item.quantity,
+        //         }))
+        //     }, 
+        //     {
+        //         where: {
+        //             id: entity.id
+        //         }
+        //     },
+        // );
     }
 
     async find(id: string): Promise<Order> {
