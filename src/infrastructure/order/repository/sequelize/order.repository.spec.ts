@@ -116,7 +116,7 @@ describe("Order repository test", () => {
 
         order.changeItems([orderItem2]);
 
-        orderRepository.update(order);
+        await orderRepository.update(order);
 
         const orderModel = await OrderModel.findOne({
             where: { id: order.id },
@@ -134,7 +134,7 @@ describe("Order repository test", () => {
                     price: orderItem2.price,
                     quantity: orderItem2.quantity,
                     order_id: "123",
-                    product_id: "123",
+                    product_id: orderItem2.productId,
                 },
             ],
         });
